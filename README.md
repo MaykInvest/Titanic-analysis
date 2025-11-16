@@ -1,6 +1,5 @@
 ### 📌 README.md — Titanic Survivor Analysis
 
-```markdown
 # 🚢 Titanic Survival Analysis
 
 This project explores the famous **Titanic dataset** from Kaggle to understand the factors that influenced passenger survival during the tragic sinking of the RMS Titanic in 1912.
@@ -74,8 +73,6 @@ The model demonstrates that a combination of socioeconomic status and demographi
 
 ## 📎 Project Structure
 
-```
-
 📁 Titanic-analysis
 ├── data/
 ├── notebooks/
@@ -84,22 +81,19 @@ The model demonstrates that a combination of socioeconomic status and demographi
 ├── README.md
 └── requirements.txt
 
-````
-
 ## 🚀 How to Run
 
 Create and activate virtual environment:
-```bash
+
 - python -m venv venv
 - source venv/bin/activate   # Mac / Linux
 - .\venv\Scripts\activate    # Windows PowerShell
-````
+
 
 Install dependencies:
 
-```bash
 pip install -r requirements.txt
-```
+
 
 Run the notebook or Python scripts in `/src`.
 
@@ -110,11 +104,9 @@ Run the notebook or Python scripts in `/src`.
 * Deploy a prediction app using Streamlit
 
 ---
-
 ### ✨ Author
 
 Maykon Jonattan — Data Analyst in progress 👨‍💻
-
 ---
 
 ### 📬 Feedback
