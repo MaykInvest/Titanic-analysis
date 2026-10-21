@@ -54,7 +54,7 @@ Survival rates calculated from the dataset:
 **In short:** "women and children first" is clearly visible, passenger class made a large difference, and people in small families did better than both solo travellers and large families.
 
 The notebook also explains the model itself with **permutation feature importance** (how much the test ROC-AUC drops when a feature is shuffled) and **SHAP values**, which show how each feature pushes a prediction towards or away from survival, overall and for individual passengers.
-<!-- After running the notebook, add the top 3 features here, e.g.: Most important features: sex, title, pclass -->
+**Most important features for the model:** title (by far), passenger class and age (permutation importance), confirmed by SHAP, which also ranks fare highly.
 
 ---
 
@@ -64,7 +64,7 @@ The notebook also explains the model itself with **permutation feature importanc
 |---|---|
 | 1 | Load the data and check its structure, missing values and duplicates |
 | 2 | Feature engineering (below) and drop `PassengerId`, `Name`, `Ticket`, `Cabin` |
-| 3 | Visual EDA (age, class, sex, title and family size vs. survival, correlation heatmap) and an automated profiling report ([`Titanic_report.html`](Titanic_report.html)) |
+| 3 | Visual EDA (age, class, sex, title and family size vs. survival, correlation heatmap) and an automated profiling report with `data-profiling` ([`Titanic_report.html`](Titanic_report.html)) |
 | 4 | Stratified train/test split (80/20) |
 | 5 | Preprocessing pipeline: median imputation + scaling for numbers, most-frequent imputation + one-hot encoding for categories. Missing ages are filled **inside** the pipeline, so nothing leaks from validation data |
 | 6 | Baseline: `DummyClassifier` (most frequent class) |
@@ -73,6 +73,7 @@ The notebook also explains the model itself with **permutation feature importanc
 | 9 | Evaluate once on the test set: classification report, confusion matrix, ROC and precision-recall curves |
 | 10 | Explain the model: permutation feature importance and SHAP values (global and per-passenger) |
 | 11 | Save the fitted pipeline with `joblib` |
+| 12 | Serve the model through a REST API with FastAPI ([`deployment/main.py`](deployment/main.py)) |
 
 ### Feature engineering
 
@@ -148,8 +149,10 @@ Titanic-analysis/
 ├── data/
 │   └── titanic.csv           # Dataset
 ├── analysis.ipynb            # Full analysis: EDA, modelling, evaluation
-├── Titanic_report.html       # Automated profiling report (ydata-profiling)
-├── titanic_model.pkl         # Trained pipeline (preprocessing + tuned Gradient Boosting)
+├── Titanic_report.html       # Automated profiling report (data-profiling)
+├── deployment/
+│   ├── main.py               # FastAPI app (feature engineering + prediction endpoint)
+│   └── titanic_model.pkl     # Trained pipeline (preprocessing + tuned Gradient Boosting)
 ├── requirements.txt
 ├── LICENSE
 └── README.md
@@ -181,7 +184,7 @@ The pipeline handles missing values, scaling and encoding. The engineered featur
 import joblib
 import pandas as pd
 
-model = joblib.load("titanic_model.pkl")
+model = joblib.load("deployment/titanic_model.pkl")
 
 passenger = pd.DataFrame([{
     "pclass": 3, "sex": "female", "age": 22, "sibsp": 1, "parch": 0,
@@ -196,9 +199,36 @@ Load it with the same library versions used to train it (scikit-learn 1.7).
 
 ---
 
+## 🌐 Prediction API (FastAPI)
+
+The model is also served as a REST API. The API takes the raw passenger details (including the name) and does the feature engineering itself.
+
+```bash
+cd deployment
+uvicorn main:app --reload
+```
+
+Open **http://127.0.0.1:8000/docs** for the interactive documentation, or call it directly:
+
+```bash
+curl -X POST http://127.0.0.1:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Braund, Mr. Owen Harris", "pclass": 3, "sex": "male", "age": 22, "sibsp": 1, "parch": 0, "fare": 7.25, "embarked": "S"}'
+```
+
+Response:
+
+```json
+{"survived": false, "survival_probability": 0.078}
+```
+
+`age` and `embarked` are optional (missing values are filled the same way as during training). Invalid input, such as `"sex": "Male"` or a negative age, is rejected with a clear `422` error.
+
+---
+
 ## 🛠️ Tech Stack
 
-Python · pandas · NumPy · scikit-learn · scikit-optimize · SHAP · ydata-profiling · Matplotlib · Seaborn · joblib
+Python · pandas · NumPy · scikit-learn · scikit-optimize · SHAP · FastAPI · data-profiling · Matplotlib · Seaborn · joblib
 
 ---
 
